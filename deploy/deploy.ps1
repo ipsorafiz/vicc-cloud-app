@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 $resourceGroup  = "rg-vicc-rafiz"
 $location       = "switzerlandnorth"
 $appServicePlan = "asp-vicc-rafiz"
-$dockerImage    = "ipsorafiz/vicc-cloud-app:1.0"
+$dockerImage    = "ipsorafiz/vicc-cloud-app:1.1"
 
 $random = Get-Random -Minimum 10000 -Maximum 99999
 $webAppName = "vicc-rafiz-$random"
@@ -33,10 +33,10 @@ Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host " VICC Azure Deployment" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
-Write-Host "`n[1/5] Azure Anmeldung wird geprüft..." -ForegroundColor Yellow
+Write-Host "`n[1/5] Azure Anmeldung wird geprÃ¼ft..." -ForegroundColor Yellow
 Invoke-AzureCli { az account show --output none }
 
-Write-Host "[2/5] Resource Group wird erstellt/geprüft..." -ForegroundColor Yellow
+Write-Host "[2/5] Resource Group wird erstellt/geprÃ¼ft..." -ForegroundColor Yellow
 Invoke-AzureCli {
     az group create `
         --name $resourceGroup `
