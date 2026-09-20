@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Microsoft 365",
+    "status": "online"
+  },
+  {
+    "name": "Netzwerk / WLAN",
+    "status": "online"
+  },
+  {
+    "name": "Fileservice",
+    "status": "online"
+  },
+  {
+    "name": "Druckservice",
+    "status": "degraded"
+  },
+  {
+    "name": "Service Desk",
+    "status": "online"
+  }
+]

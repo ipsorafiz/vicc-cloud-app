@@ -1,53 +1,271 @@
 from flask import Flask, jsonify
+from pathlib import Path
+from datetime import datetime, timezone
+import json
+import html
 
 app = Flask(__name__)
 
+APP_VERSION = "1.1"
+ENVIRONMENT = "Microsoft Azure"
+DATA_FILE = Path(__file__).with_name("services.json")
+
+
+def load_services():
+    with open(DATA_FILE, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def calculate_overall_status(services):
+    statuses = [service["status"] for service in services]
+
+    if "offline" in statuses:
+        return "outage"
+    if "degraded" in statuses:
+        return "degraded"
+
+    return "operational"
+
+
+def current_timestamp():
+    return datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
+
+
 @app.route("/")
 def home():
-    return """
+    services = load_services()
+    overall = calculate_overall_status(services)
+    timestamp = current_timestamp()
+
+    status_text = {
+        "operational": "Alle Systeme betriebsbereit",
+        "degraded": "Einzelne Services eingeschränkt",
+        "outage": "Störung erkannt"
+    }
+
+    overall_class = {
+        "operational": "green",
+        "degraded": "yellow",
+        "outage": "red"
+    }
+
+    service_text = {
+        "online": "Online",
+        "degraded": "Eingeschränkt",
+        "offline": "Offline"
+    }
+
+    rows = ""
+
+    for service in services:
+        name = html.escape(service["name"])
+        status = service["status"]
+        label = service_text.get(status, status)
+
+        rows += f"""
+        <div class="service">
+            <div class="service-name">{name}</div>
+            <div class="status">
+                <span class="dot {status}"></span>
+                {label}
+            </div>
+        </div>
+        """
+
+    return f"""
     <!DOCTYPE html>
     <html lang="de">
     <head>
         <meta charset="UTF-8">
-        <title>VICC Cloud Application</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>IT Service Status</title>
+
         <style>
-            body {
+            * {{
+                box-sizing: border-box;
+            }}
+
+            body {{
+                margin: 0;
                 font-family: Arial, sans-serif;
                 background: #f4f6f8;
-                text-align: center;
-                padding-top: 100px;
-            }
-            .card {
+                color: #1f2937;
+            }}
+
+            .container {{
+                width: 90%;
+                max-width: 850px;
+                margin: 60px auto;
+            }}
+
+            .header {{
+                margin-bottom: 25px;
+            }}
+
+            h1 {{
+                margin-bottom: 8px;
+                font-size: 32px;
+            }}
+
+            .subtitle {{
+                color: #6b7280;
+                margin-top: 0;
+            }}
+
+            .overall {{
                 background: white;
-                display: inline-block;
-                padding: 40px 70px;
                 border-radius: 12px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.10);
-            }
-            .online {
-                color: green;
+                padding: 25px;
+                margin-bottom: 20px;
+                box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                font-size: 20px;
                 font-weight: bold;
-            }
+            }}
+
+            .overall-indicator {{
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+            }}
+
+            .green {{
+                background: #16a34a;
+            }}
+
+            .yellow {{
+                background: #eab308;
+            }}
+
+            .red {{
+                background: #dc2626;
+            }}
+
+            .services {{
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+                overflow: hidden;
+            }}
+
+            .service {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px 25px;
+                border-bottom: 1px solid #e5e7eb;
+            }}
+
+            .service:last-child {{
+                border-bottom: none;
+            }}
+
+            .service-name {{
+                font-weight: bold;
+            }}
+
+            .status {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }}
+
+            .dot {{
+                width: 11px;
+                height: 11px;
+                border-radius: 50%;
+                display: inline-block;
+            }}
+
+            .online {{
+                background: #16a34a;
+            }}
+
+            .degraded {{
+                background: #eab308;
+            }}
+
+            .offline {{
+                background: #dc2626;
+            }}
+
+            .footer {{
+                margin-top: 22px;
+                color: #6b7280;
+                font-size: 14px;
+                line-height: 1.6;
+            }}
+
+            .api-link {{
+                display: inline-block;
+                margin-top: 12px;
+                color: #2563eb;
+                text-decoration: none;
+            }}
+
+            .api-link:hover {{
+                text-decoration: underline;
+            }}
         </style>
     </head>
+
     <body>
-        <div class="card">
-            <h1>VICC Cloud Application</h1>
-            <p>Status: <span class="online">Online</span></p>
-            <p>Environment: Microsoft Azure</p>
-            <p>Version: 1.0</p>
+        <div class="container">
+
+            <div class="header">
+                <h1>IT Service Status</h1>
+                <p class="subtitle">Cloudbasiertes Statusportal für IT-Services</p>
+            </div>
+
+            <div class="overall">
+                <span class="overall-indicator {overall_class[overall]}"></span>
+                {status_text[overall]}
+            </div>
+
+            <div class="services">
+                {rows}
+            </div>
+
+            <div class="footer">
+                Letzte Abfrage: {timestamp}<br>
+                Environment: {ENVIRONMENT}<br>
+                Version: {APP_VERSION}<br>
+
+                <a class="api-link" href="/api/status">
+                    REST-API anzeigen
+                </a>
+            </div>
+
         </div>
     </body>
     </html>
     """
 
+
 @app.route("/api/status")
-def status():
+def api_status():
+    services = load_services()
+    overall = calculate_overall_status(services)
+
     return jsonify(
-        status="online",
-        environment="Microsoft Azure",
-        version="1.0"
+        application="IT Service Status",
+        overall_status=overall,
+        environment=ENVIRONMENT,
+        version=APP_VERSION,
+        timestamp=current_timestamp(),
+        services=services
     )
+
+
+@app.route("/health")
+def health():
+    return jsonify(
+        status="healthy",
+        version=APP_VERSION
+    )
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
