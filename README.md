@@ -1,33 +1,58 @@
-# Cloudbasiertes Statusportal f�r IT-Services
+# Cloudbasierter IT Service Monitor
 
 Praxisarbeit im Fach Virtualisierung und Cloud Computing (VICC).
 
-## Projekt�bersicht
+## Projektübersicht
 
-Dieses Projekt demonstriert die automatisierte Bereitstellung einer containerisierten Webanwendung auf Microsoft Azure.
+Dieses Projekt demonstriert die automatisierte Bereitstellung einer containerisierten und konfigurierbaren Monitoring-Anwendung auf Microsoft Azure.
 
-Die entwickelte Anwendung ist ein cloudbasiertes Statusportal f�r IT-Services. Sie stellt den Status verschiedener Services �ber eine Weboberfl�che dar und bietet zus�tzlich eine REST-API.
+Die entwickelte Anwendung überwacht konfigurierte HTTP-/HTTPS-Endpunkte und stellt deren aktuellen Zustand über eine Weboberfläche sowie eine REST-API bereit.
+
+Die Anwendung wird als einfache cloudbasierte SaaS-Lösung über Microsoft Azure App Service bereitgestellt.
 
 ## Funktionen
 
-Die Anwendung stellt folgende Funktionen bereit:
+Der IT Service Monitor bietet folgende Funktionen:
 
-- Status�bersicht verschiedener IT-Services
-- Gesamtstatus der Umgebung
-- Statuswerte Online, Eingeschr�nkt und Offline
+- Automatische Prüfung konfigurierter HTTP-/HTTPS-Endpunkte
+- Ermittlung des HTTP-Statuscodes
+- Messung der Antwortzeit
+- Automatische Bewertung des Servicezustands
+- Gesamtstatus aller überwachten Services
 - REST-API unter `/api/status`
 - Health-Endpoint unter `/health`
-- Anzeige von Version und Umgebung
+- Konfiguration der überwachten Services über `services.json`
+- Automatisierte Bereitstellung der Azure-Infrastruktur
 
-Aktuell werden folgende Services dargestellt:
+## Statuswerte
+
+Die Anwendung unterscheidet zwischen drei Zuständen:
+
+- `Online` – Service ist erreichbar und antwortet innerhalb der definierten Reaktionszeit
+- `Eingeschränkt` – Service ist erreichbar, weist jedoch beispielsweise eine erhöhte Antwortzeit auf
+- `Offline` – Service ist nicht erreichbar oder liefert einen entsprechenden Fehlerstatus
+
+## Aktuell konfigurierte Monitoring-Ziele
 
 - Microsoft 365
-- Netzwerk / WLAN
-- Fileservice
-- Druckservice
-- Service Desk
+- Microsoft Azure
+- GitHub
+- Docker Hub
+- Demo Störungsdienst
 
-Die Statuswerte werden im Rahmen des Prototyps aus einer Konfigurationsdatei geladen.
+Der Demo Störungsdienst liefert bewusst einen HTTP-503-Status, um einen Ausfall innerhalb der Anwendung reproduzierbar darzustellen.
+
+## Konfiguration
+
+Die zu überwachenden Services werden in `app/services.json` definiert.
+
+Pro Service können unter anderem folgende Werte konfiguriert werden:
+
+- Name
+- URL
+- Timeout
+
+Neue Monitoring-Ziele können dadurch ergänzt werden, ohne die Programmlogik der Anwendung anzupassen.
 
 ## Verwendete Technologien
 
@@ -43,33 +68,23 @@ Die Statuswerte werden im Rahmen des Prototyps aus einer Konfigurationsdatei gel
 ## Projektstruktur
 
 - `app/`
-  - `app.py` � Webanwendung und REST-API
-  - `services.json` � Statusinformationen der dargestellten IT-Services
-  - `Dockerfile` � Definition des Container Images
-  - `requirements.txt` � ben�tigte Python-Abh�ngigkeiten
+  - `app.py` – Monitoring-Logik, Weboberfläche und REST-API
+  - `services.json` – Konfiguration der überwachten Services
+  - `Dockerfile` – Definition des Container Images
+  - `requirements.txt` – benötigte Python-Abhängigkeiten
 
 - `deploy/`
-  - `deploy.ps1` � automatisierte Bereitstellung der Azure-Infrastruktur
+  - `deploy.ps1` – automatisierte Bereitstellung der Azure-Infrastruktur
 
 ## Container Image
 
 Docker Hub:
 
-`ipsorafiz/vicc-cloud-app:1.1`
+`ipsorafiz/vicc-cloud-app:1.2`
 
-## Deployment
+## Azure Deployment
 
-Voraussetzungen:
-
-- Azure CLI
-- Azure Subscription
-- PowerShell
-
-Das Deployment erfolgt mit:
-
-`deploy/deploy.ps1`
-
-Das Script erstellt bzw. konfiguriert:
+Das Deployment-Script erstellt beziehungsweise konfiguriert:
 
 - Azure Resource Group
 - Linux App Service Plan
@@ -77,9 +92,11 @@ Das Script erstellt bzw. konfiguriert:
 - Container Deployment
 - HTTPS
 
-## Bereitgestellte Endpunkte
+Das aktuelle Container Image wird aus Docker Hub geladen und im Azure App Service betrieben.
 
-Weboberfl�che:
+## Endpunkte
+
+Weboberfläche:
 
 `/`
 
@@ -93,9 +110,15 @@ Health Check:
 
 ## Hinweise zum Prototyp
 
-F�r einen produktiven Einsatz als internes Statusportal w�re eine Authentifizierung bzw. Zugriffsbeschr�nkung erforderlich.
+Der aktuelle Service Monitor überprüft HTTP-/HTTPS-Endpunkte.
 
-Diese ist im Rahmen der Praxisarbeit bewusst nicht umgesetzt, da der Schwerpunkt auf der Cloud-Infrastruktur, der automatisierten Bereitstellung sowie der Betrachtung von Skalierbarkeit, Hochverf�gbarkeit und Portierbarkeit liegt.
+Eine zukünftige Erweiterung könnte zusätzliche Monitoring-Typen wie Datenbanken, TCP-Dienste, interne Systeme oder Schnittstellen bestehender Monitoring-Lösungen berücksichtigen.
+
+Für einen produktiven internen Einsatz wäre zusätzlich eine Authentifizierung beziehungsweise Zugriffsbeschränkung sinnvoll.
+
+## Version
+
+Aktuelle Version: `1.2`
 
 ## Autor
 

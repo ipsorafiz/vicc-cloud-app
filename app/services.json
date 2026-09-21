@@ -1,22 +1,27 @@
 [
-  {
-    "name": "Microsoft 365",
-    "status": "online"
-  },
-  {
-    "name": "Netzwerk / WLAN",
-    "status": "online"
-  },
-  {
-    "name": "Fileservice",
-    "status": "online"
-  },
-  {
-    "name": "Druckservice",
-    "status": "degraded"
-  },
-  {
-    "name": "Service Desk",
-    "status": "online"
-  }
+    {
+        "name":  "Microsoft 365",
+        "url":  "https://www.microsoft.com/microsoft-365",
+        "timeout":  5
+    },
+    {
+        "name":  "Microsoft Azure",
+        "url":  "https://azure.microsoft.com",
+        "timeout":  10
+    },
+    {
+        "name":  "GitHub",
+        "url":  "https://github.com",
+        "timeout":  5
+    },
+    {
+        "name":  "Docker Hub",
+        "url":  "https://hub.docker.com",
+        "timeout":  5
+    },
+    {
+        "name":  "Demo Störungsdienst",
+        "url":  "https://httpbin.org/status/503",
+        "timeout":  5
+    }
 ]
