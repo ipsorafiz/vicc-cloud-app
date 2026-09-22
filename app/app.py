@@ -1,3 +1,8 @@
+# VICC Praxisarbeit – Cloudbasierter IT Service Monitor
+# Die Anwendung lädt konfigurierte HTTP-/HTTPS-Endpunkte aus services.json,
+# prüft deren Erreichbarkeit und stellt die Resultate über eine Weboberfläche
+# sowie eine REST-API zur Verfügung.
+
 from flask import Flask, jsonify
 from pathlib import Path
 from datetime import datetime, timezone
@@ -13,11 +18,14 @@ ENVIRONMENT = "Microsoft Azure"
 DATA_FILE = Path(__file__).with_name("services.json")
 
 
+# Lädt die zu überwachenden Services aus der JSON-Konfigurationsdatei.
 def load_services():
     with open(DATA_FILE, "r", encoding="utf-8") as file:
         return json.load(file)
 
 
+# Führt die HTTP-/HTTPS-Prüfung eines einzelnen Services durch.
+# Neben dem HTTP-Statuscode wird die benötigte Antwortzeit gemessen.
 def check_service(service):
     name = service["name"]
     url = service["url"]
@@ -35,6 +43,9 @@ def check_service(service):
 
         response_time_ms = round((time.perf_counter() - started) * 1000)
 
+        # HTTP 200–399 gilt grundsätzlich als erreichbar.
+        # Bei einer Antwortzeit über 2000 ms wird der Service als eingeschränkt bewertet.
+        # HTTP 400–499 wird als eingeschränkt und HTTP 500+ als offline bewertet.
         if 200 <= response.status_code < 400:
             if response_time_ms > 2000:
                 status = "degraded"
@@ -65,10 +76,14 @@ def check_service(service):
         }
 
 
+# Führt die Prüfung für alle in services.json konfigurierten Services aus.
 def check_all_services():
     return [check_service(service) for service in load_services()]
 
 
+# Ermittelt aus den Einzelzuständen den Gesamtzustand des Monitors.
+# Ein Offline-Service führt zu einem Gesamtausfallstatus.
+# Andernfalls wird ein eingeschränkter Service entsprechend berücksichtigt.
 def calculate_overall_status(services):
     statuses = [service["status"] for service in services]
 
@@ -81,10 +96,14 @@ def calculate_overall_status(services):
     return "operational"
 
 
+# Erstellt einen UTC-Zeitstempel für Weboberfläche und API-Ausgabe.
 def current_timestamp():
     return datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
 
 
+# Weboberfläche:
+# Beim Aufruf werden die aktuellen Serviceprüfungen durchgeführt
+# und die Ergebnisse als HTML-Seite dargestellt.
 @app.route("/")
 def home():
     services = check_all_services()
@@ -332,6 +351,9 @@ def home():
     """
 
 
+# REST-API:
+# Liefert den aktuellen Gesamtstatus und die Resultate
+# der einzelnen Serviceprüfungen im JSON-Format.
 @app.route("/api/status")
 def api_status():
     services = check_all_services()
@@ -347,6 +369,9 @@ def api_status():
     )
 
 
+# Health-Endpunkt:
+# Zeigt ausschliesslich den Zustand der Monitoring-Anwendung selbst.
+# Der Zustand der überwachten Zielsysteme wird hier nicht berücksichtigt.
 @app.route("/health")
 def health():
     return jsonify(
@@ -356,5 +381,7 @@ def health():
     )
 
 
+# Lokaler Start der Anwendung. Im Docker-Container erfolgt der produktive
+# Start gemäss Dockerfile über Gunicorn.
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
